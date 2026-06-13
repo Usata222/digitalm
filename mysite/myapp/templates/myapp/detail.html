@@ -1,0 +1,95 @@
+{% extends "myapp/base.html" %}
+{% block body %}
+<div class="max-w-4xl mx-auto px-6 py-10">
+    <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col md:flex-row">
+
+        <!-- Thumbnail -->
+        <div class="md:w-80 h-64 md:h-auto bg-gray-100 flex items-center justify-center flex-shrink-0">
+            {% if product.thumbnail %}
+                <img class="w-full h-full object-cover" src="{{ product.thumbnail.url }}" alt="{{ product.name }}">
+            {% else %}
+                <span class="text-gray-300 text-sm">No image</span>
+            {% endif %}
+        </div>
+
+        <!-- Details -->
+        <div class="p-8 flex flex-col justify-between flex-1">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ product.name }}</h1>
+                <p class="text-gray-500 text-sm mb-2">{{ product.description }}</p>
+                <p class="text-xs text-gray-400 mb-3">
+                    Sold by <span class="font-medium">{{ product.seller.username }}</span>
+                </p>
+
+                <!-- Rating display -->
+                {% with avg=product.average_rating count=product.rating_count %}
+                <div class="flex items-center gap-2 mb-4">
+                    {% if avg %}
+                        <span class="text-amber-500 font-bold">{{ avg }}</span>
+                        <div class="flex">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= avg %}
+                                    <span class="text-amber-400">★</span>
+                                {% else %}
+                                    <span class="text-gray-300">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-xs text-gray-400">({{ count }} rating{{ count|pluralize }})</span>
+                    {% else %}
+                        <span class="text-xs text-gray-400">No ratings yet</span>
+                    {% endif %}
+                </div>
+                {% endwith %}
+
+                <div class="text-4xl font-bold text-green-600 mb-6">${{ product.price }}</div>
+            </div>
+
+            {% if user.is_authenticated %}
+                <div id="myemail" hidden>{{ request.user.email }}</div>
+                <button id="checkout-button"
+                        class="bg-green-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-600 transition w-full sm:w-auto">
+                    Buy Now
+                </button>
+            {% else %}
+                <div>
+                    <a href="{% url 'register' %}?next={% url 'detail' product.id %}"
+                       class="block text-center bg-green-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-600 transition mb-3">
+                        Sign Up to Purchase
+                    </a>
+                    <p class="text-sm text-gray-400 text-center">
+                        Already have an account?
+                        <a href="{% url 'login' %}?next={% url 'detail' product.id %}"
+                           class="text-indigo-500 hover:underline">Login</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<script>
+    document.getElementById('checkout-button').addEventListener('click', function () {
+        var email = document.getElementById('myemail').innerText.trim();
+        fetch("{% url 'api_checkout_session' id=product.id %}", {
+            method: "POST",
+            headers: {"X-CSRFToken": "{{ csrf_token }}"},
+            body: JSON.stringify({'email': email})
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (session) {
+            if (session.url) {
+                window.location.href = session.url;
+            } else {
+                alert("Could not create checkout session. Please try again.");
+            }
+        })
+        .catch(function (error) {
+            console.error("Error:", error);
+            alert("Something went wrong. Please try again.");
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

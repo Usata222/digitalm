@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Digital Marketplace</title>
+    <style>
+        .mode-badge-buyer  { background: #e0f2fe; color: #0369a1; }
+        .mode-badge-creator { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    {% if user.is_authenticated %}
+        {% with mode=request.session.mode|default:"buyer" %}
+        <nav class="{% if mode == 'creator' %}bg-amber-50 border-b border-amber-200{% else %}bg-white border-b border-gray-200{% endif %} shadow-sm">
+            <div class="flex justify-between items-center px-4 sm:px-6 py-3">
+
+                <!-- Left: Brand -->
+                <a href="{% url 'index' %}" class="text-lg sm:text-xl font-bold
+                    {% if mode == 'creator' %}text-amber-800{% else %}text-gray-800{% endif %}">
+                    Digital MarketPlace
+                </a>
+
+                <!-- Center: Mode badge (hidden on smallest screens to save space) -->
+                <span class="hidden sm:inline text-xs font-semibold px-3 py-1 rounded-full
+                    {% if mode == 'creator' %}mode-badge-creator{% else %}mode-badge-buyer{% endif %}">
+                    {% if mode == 'creator' %}Creator Mode{% else %}Buyer Mode{% endif %}
+                </span>
+
+                <!-- [NEW] Mobile menu toggle (hamburger) -->
+                <button id="nav-toggle" type="button"
+                        class="md:hidden p-2 rounded-lg hover:bg-black/5 focus:outline-none"
+                        aria-label="Toggle navigation menu">
+                    <svg id="nav-icon-open" class="w-6 h-6 {% if mode == 'creator' %}text-amber-800{% else %}text-gray-700{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <svg id="nav-icon-close" class="w-6 h-6 hidden {% if mode == 'creator' %}text-amber-800{% else %}text-gray-700{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+
+                <!-- Right: Nav links (desktop) -->
+                <div class="hidden md:flex items-center gap-5">
+                    {% if mode == 'creator' %}
+                        <!-- Creator nav -->
+                        <a href="{% url 'dashboard' %}"
+                           class="text-sm font-medium text-amber-800 hover:text-amber-600
+                           {% if request.resolver_match.url_name == 'dashboard' %}border-b-2 border-amber-500{% endif %}">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'sales' %}"
+                           class="text-sm font-medium text-amber-800 hover:text-amber-600
+                           {% if request.resolver_match.url_name == 'sales' %}border-b-2 border-amber-500{% endif %}">
+                            Sales
+                        </a>
+                        <a href="{% url 'createproduct' %}"
+                           class="text-sm font-medium text-amber-800 hover:text-amber-600
+                           {% if request.resolver_match.url_name == 'createproduct' %}border-b-2 border-amber-500{% endif %}">
+                            Create Product
+                        </a>
+                        <a href="{% url 'switch_mode' %}"
+                           class="text-sm font-semibold bg-blue-500 text-white px-4 py-1.5 rounded-full hover:bg-blue-600 transition">
+                            Switch to Buyer
+                        </a>
+                    {% else %}
+                        <!-- Buyer nav -->
+                        <a href="{% url 'index' %}"
+                           class="text-sm font-medium text-gray-700 hover:text-green-600
+                           {% if request.resolver_match.url_name == 'index' %}border-b-2 border-green-500{% endif %}">
+                            Browse Courses
+                        </a>
+                        <a href="{% url 'purchase' %}"
+                           class="text-sm font-medium text-gray-700 hover:text-green-600
+                           {% if request.resolver_match.url_name == 'purchase' %}border-b-2 border-green-500{% endif %}">
+                            My Purchases
+                        </a>
+                        <a href="{% url 'switch_mode' %}"
+                           class="text-sm font-semibold bg-amber-500 text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition">
+                             Switch to Creator
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'logout' %}"
+                       class="text-sm font-medium text-red-500 hover:text-red-700">
+                        Logout
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- [NEW] Mobile dropdown menu -->
+            <div id="nav-menu" class="hidden md:hidden flex flex-col gap-1 px-4 pb-4">
+                <span class="inline-block w-fit text-xs font-semibold px-3 py-1 rounded-full mb-2
+                    {% if mode == 'creator' %}mode-badge-creator{% else %}mode-badge-buyer{% endif %}">
+                    {% if mode == 'creator' %}Creator Mode{% else %}Buyer Mode{% endif %}
+                </span>
+
+                {% if mode == 'creator' %}
+                    <a href="{% url 'dashboard' %}"
+                       class="text-sm font-medium text-amber-800 hover:text-amber-600 py-2
+                       {% if request.resolver_match.url_name == 'dashboard' %}font-bold{% endif %}">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'sales' %}"
+                       class="text-sm font-medium text-amber-800 hover:text-amber-600 py-2
+                       {% if request.resolver_match.url_name == 'sales' %}font-bold{% endif %}">
+                        Sales
+                    </a>
+                    <a href="{% url 'createproduct' %}"
+                       class="text-sm font-medium text-amber-800 hover:text-amber-600 py-2
+                       {% if request.resolver_match.url_name == 'createproduct' %}font-bold{% endif %}">
+                        Create Product
+                    </a>
+                    <a href="{% url 'switch_mode' %}"
+                       class="text-sm font-semibold bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition text-center mt-1">
+                        Switch to Buyer
+                    </a>
+                {% else %}
+                    <a href="{% url 'index' %}"
+                       class="text-sm font-medium text-gray-700 hover:text-green-600 py-2
+                       {% if request.resolver_match.url_name == 'index' %}font-bold{% endif %}">
+                        Browse Courses
+                    </a>
+                    <a href="{% url 'purchase' %}"
+                       class="text-sm font-medium text-gray-700 hover:text-green-600 py-2
+                       {% if request.resolver_match.url_name == 'purchase' %}font-bold{% endif %}">
+                        My Purchases
+                    </a>
+                    <a href="{% url 'switch_mode' %}"
+                       class="text-sm font-semibold bg-amber-500 text-white px-4 py-2 rounded-full hover:bg-amber-600 transition text-center mt-1">
+                         Switch to Creator
+                    </a>
+                {% endif %}
+
+                <a href="{% url 'logout' %}"
+                   class="text-sm font-medium text-red-500 hover:text-red-700 py-2">
+                    Logout
+                </a>
+            </div>
+        </nav>
+        {% endwith %}
+
+    {% else %}
+        <!-- Guest nav -->
+        <nav class="bg-white border-b border-gray-200 shadow-sm">
+            <div class="flex justify-between items-center px-4 sm:px-6 py-3">
+                <a href="{% url 'index' %}" class="text-lg sm:text-xl font-bold text-gray-800">
+                    Digital MarketPlace
+                </a>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <a href="{% url 'login' %}"
+                       class="text-sm font-medium text-gray-700 hover:text-green-600">Login</a>
+                    <a href="{% url 'register' %}"
+                       class="text-sm font-semibold bg-green-500 text-white px-3 sm:px-4 py-1.5 rounded-full hover:bg-green-600 transition">
+                        Sign Up
+                    </a>
+                </div>
+            </div>
+        </nav>
+    {% endif %}
+
+    {% if messages %}
+    <div class="px-4 sm:px-6 mt-3">
+        {% for message in messages %}
+        <div class="p-3 mb-2 rounded text-sm
+            {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block body %}{% endblock %}
+
+    <!-- [NEW] Mobile nav toggle script -->
+    <script>
+    (function () {
+        const toggle = document.getElementById('nav-toggle');
+        const menu = document.getElementById('nav-menu');
+        const iconOpen = document.getElementById('nav-icon-open');
+        const iconClose = document.getElementById('nav-icon-close');
+
+        if (toggle && menu) {
+            toggle.addEventListener('click', function () {
+                menu.classList.toggle('hidden');
+                iconOpen.classList.toggle('hidden');
+                iconClose.classList.toggle('hidden');
+            });
+        }
+    })();
+    </script>
+
+</body>
+</html>

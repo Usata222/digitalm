@@ -1,0 +1,46 @@
+{% extends "myapp/base.html" %}
+{% block body %}
+<div class="flex flex-col justify-center items-center min-h-screen px-4">
+    <h1 class="font-bold text-lg mb-4">Create Account</h1>
+    <form class="shadow-lg rounded-xl p-6 sm:p-10 w-full max-w-sm" method="POST">
+        {% csrf_token %}
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+        {% if user_form.errors %}
+        <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+            {% for field in user_form %}
+                {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+            {% endfor %}
+            {% for error in user_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Username</label>
+            <div class="border rounded py-2 px-2">{{ user_form.username }}</div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <div class="border rounded py-2 px-2">{{ user_form.email }}</div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">First Name (optional)</label>
+            <div class="border rounded py-2 px-2">{{ user_form.first_name }}</div>
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <div class="border rounded py-2 px-2">{{ user_form.password }}</div>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-1">Confirm Password</label>
+            <div class="border rounded py-2 px-2">{{ user_form.password2 }}</div>
+        </div>
+        <button class="bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600" type="submit">
+            Create Account
+        </button>
+    </form>
+    <p class="m-6 text-sm">Already have an account?
+        <a class="text-indigo-500" href="{% url 'login' %}">Login here</a>
+    </p>
+</div>
+{% endblock %}

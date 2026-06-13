@@ -1,0 +1,147 @@
+{% extends "myapp/base.html" %}
+{% block body %}
+<div class="max-w-4xl mx-auto px-6 py-10">
+
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">My Purchases</h1>
+        <a href="{% url 'index' %}"
+           class="bg-green-500 text-white text-sm px-4 py-2 rounded-full hover:bg-green-600 transition w-fit">
+            Browse Courses
+        </a>
+    </div>
+
+    {% if orders_with_ratings %}
+    <div class="space-y-4">
+        {% for item in orders_with_ratings %}
+        {% with order=item.order user_rating=item.user_rating %}
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="flex flex-col sm:flex-row items-start gap-4">
+
+                <!-- Thumbnail -->
+                <div class="h-20 w-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                    {% if order.product.thumbnail %}
+                        <img class="h-full w-full object-cover" src="{{ order.product.thumbnail.url }}" alt="">
+                    {% else %}
+                        <span class="text-gray-300 text-xs">No img</span>
+                    {% endif %}
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 w-full">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-gray-800">{{ order.product.name }}</div>
+                            <div class="text-sm text-gray-400 mt-0.5">
+                                Purchased {{ order.created_on|date:"M d, Y" }} &middot;
+                                <span class="text-green-600 font-semibold">${{ order.amount }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Download button -->
+                        <a href="{% url 'download_file' order.product.id %}"
+                           class="bg-green-500 text-white text-sm px-4 py-2 rounded-full hover:bg-green-600 transition flex items-center justify-center gap-1 flex-shrink-0 w-fit">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v6m0 0l-3-3m3 3l3-3M12 4v8"/>
+                            </svg>
+                            Download
+                        </a>
+                    </div>
+
+                    <!-- Star rating -->
+                    <div class="mt-4">
+                        <div class="text-xs text-gray-400 mb-1">
+                            {% if user_rating %}Your rating:{% else %}Rate this course:{% endif %}
+                        </div>
+                        <div class="star-widget flex gap-1"
+                             data-product-id="{{ order.product.id }}"
+                             data-current-rating="{{ user_rating|default:0 }}">
+                            {% for i in "12345" %}
+                            <button type="button"
+                                    class="star-btn text-2xl leading-none focus:outline-none transition-transform hover:scale-110"
+                                    data-star="{{ forloop.counter }}">
+                                ☆
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <div class="rating-feedback text-xs mt-1 text-gray-400 h-4"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="bg-white rounded-xl shadow p-10 text-center text-gray-400 text-sm">
+        You haven't purchased anything yet.
+        <a href="{% url 'index' %}" class="text-green-600 font-medium hover:underline ml-1">Browse courses</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+    const CSRF = '{{ csrf_token }}';
+
+    document.querySelectorAll('.star-widget').forEach(function (widget) {
+        const productId = widget.dataset.productId;
+        const buttons = widget.querySelectorAll('.star-btn');
+        const feedback = widget.nextElementSibling;
+        let currentRating = parseInt(widget.dataset.currentRating) || 0;
+
+        function renderStars(highlightUpTo) {
+            buttons.forEach(function (btn) {
+                const s = parseInt(btn.dataset.star);
+                btn.textContent = s <= highlightUpTo ? '★' : '☆';
+                btn.style.color  = s <= highlightUpTo ? '#f59e0b' : '#d1d5db';
+            });
+        }
+
+        // Draw saved rating on load
+        renderStars(currentRating);
+
+        // Hover preview
+        buttons.forEach(function (btn) {
+            btn.addEventListener('mouseenter', function () {
+                renderStars(parseInt(btn.dataset.star));
+            });
+            btn.addEventListener('mouseleave', function () {
+                renderStars(currentRating);
+            });
+
+            // Click to submit
+            btn.addEventListener('click', function () {
+                const stars = parseInt(btn.dataset.star);
+                const formData = new FormData();
+                formData.append('stars', stars);
+                formData.append('csrfmiddlewaretoken', CSRF);
+
+                fetch('/rate/' + productId + '/', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        currentRating = data.stars;
+                        renderStars(currentRating);
+                        feedback.textContent = 'Saved! Avg: ' + data.average + '★ (' + data.count + ' rating' + (data.count !== 1 ? 's' : '') + ')';
+                        feedback.style.color = '#16a34a';
+                    } else {
+                        feedback.textContent = data.error || 'Could not save rating.';
+                        feedback.style.color = '#dc2626';
+                    }
+                })
+                .catch(function () {
+                    feedback.textContent = 'Something went wrong.';
+                    feedback.style.color = '#dc2626';
+                });
+            });
+        });
+    });
+})();
+</script>
+{% endblock %}
