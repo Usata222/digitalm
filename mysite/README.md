@@ -6,6 +6,9 @@ A full-stack digital product marketplace built with Django — where creators ca
 
 ## Demo / Screenshots
 
+**Live demo:** https://digitalm-0doy.onrender.com
+
+
 > 📸 Add your screenshots or GIF demo here
 
 <!-- Replace the lines below with your actual image paths or URLs -->
