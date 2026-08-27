@@ -9,8 +9,6 @@ A full-stack digital product marketplace built with Django — where creators ca
 **Live demo:** https://digitalm-0doy.onrender.com
 
 
-> 📸 Add your screenshots or GIF demo here
-
 <!-- Replace the lines below with your actual image paths or URLs -->
 
 **Homepage / Product Listings**
@@ -24,8 +22,6 @@ A full-stack digital product marketplace built with Django — where creators ca
 
 **Sales Analytics**
 ![Sales Screenshot](screenshots/sales.png)
-
-> 💡 Tip: Create a `screenshots/` folder in your repo root, add your images there, and the links above will work automatically.
 
 ---
 
